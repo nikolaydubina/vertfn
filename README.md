@@ -1,4 +1,4 @@
-## vertfn
+## 💦 vertfn
 
 _Go linter for Vertical Function Ordering_
 
