@@ -1,6 +1,4 @@
-## 💦 vertfn
-
-_Go linter for Vertical Function Ordering_
+## 💦 vertfn: Go linter for Vertical Function Ordering
 
 > **Vertical Ordering**   
 > In general we want function call dependencies to point in the downward direction. That is, a function that is called should be bellow a function that does the calling. This creates a nice flow down the source code module from the high level to low level.
