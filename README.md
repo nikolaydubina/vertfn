@@ -10,10 +10,6 @@ Go linter for Vertical Function Ordering
 Clean Code, Chapter 5, code example `WikiPageResponder.java`.
 
 ```java
-package clean.code.chapter05;
-
-import clean.code.added.to.make.code.build.*;
-
 public class WikiPageResponder implements SecureResponder {
   protected WikiPage page;
   protected PageData pageData;
@@ -65,45 +61,7 @@ public class WikiPageResponder implements SecureResponder {
     response.setContent(html);
     return response;
   }
-
-  // added to make code build
-  private String makeHtml(FitNesseContext context) {
-    return null;  //TODO: Auto-generated
-  }
-}
-
-// Following added to make code build
-interface SecureResponder {}
-
-
-class Request {
-  public String getResource() {
-    return null;  //TODO: Auto-generated
-  }
-}
-
-class Response {}
-class FitNesseContext {
-  public Blah root;
-}
-class SimpleResponse extends Response {
-  public void setMaxAge(int i) {
-    //TODO: Auto-generated
-  }
-
-  public void setContent(String html) {
-    //TODO: Auto-generated
-  }
-}
-class StringUtil {
-  public static boolean isBlank(String pageName) {
-    return false;  //TODO: Auto-generated
-  }
-}
-
-class NotFoundResponder {
-  public Response makeResponse(FitNesseContext context, Request request) {
-    return null;  //TODO: Auto-generated
-  }
+  
+  ...
 }
 ```
