@@ -1,13 +1,20 @@
-# vertfn
+## vertfn
 
-Go linter for Vertical Function Ordering
+_Go linter for Vertical Function Ordering_
 
-> "This means a function that is called should be below a function that does the calling. We want this because it creates a nice flow down the source code module from high level to low level." — Clean Code, Robert C. Martin, p84
-
+> **Vertical Ordering**   
+> In general we want function call dependencies to point in the downward direction. That is, a function that is called should be bellow a function that does the calling. This creates a nice flow down the source code module from the high level to low level.
+> As in newspaper articles, we expect the most important concepts to come first, and we expect them to be expressed with the least amount of polluting detail. We expect the low-level details to come last. This allows us to skim source files, getting the gist from the frist few functions, without having to immerge ourselves in the details.  
+> — Clean Code, Chapter 5, p84, Robert C. Martin, 2009
 
 ## Appendix A: Canonical Java Example
 
-Clean Code, Chapter 5, code example `WikiPageResponder.java`.
+Clean Code, Chapter 5, code example `WikiPageResponder.java`
+
+<details>
+<summary>
+code
+</summary>
 
 ```java
 public class WikiPageResponder implements SecureResponder {
@@ -65,3 +72,4 @@ public class WikiPageResponder implements SecureResponder {
   ...
 }
 ```
+</details>
