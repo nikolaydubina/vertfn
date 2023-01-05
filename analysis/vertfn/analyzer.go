@@ -36,6 +36,7 @@ func fnameFromCallExpr(n *ast.CallExpr) string {
 		// TODO: utilize type/package information
 		// TODO: chains of selectors
 		// TODO: chains of methods
+		// TODO: differentiate same method name but on different classes
 		fmt.Printf("%#v | %#v\n", sel.X, sel.Sel)
 	}
 	return ""
