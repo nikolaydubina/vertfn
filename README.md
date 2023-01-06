@@ -3,6 +3,8 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/nikolaydubina/vertfn)](https://goreportcard.com/report/github.com/nikolaydubina/vertfn)
 [![go-recipes](https://raw.githubusercontent.com/nikolaydubina/go-recipes/main/badge.svg?raw=true)](https://github.com/nikolaydubina/go-recipes)
 
+> _Disclaimer: false positives; practically this is useful for "exploration" rather than for "enforcement"_
+
 > **Vertical Ordering**   
 > In general we want function call dependencies to point in the downward direction. That is, a function that is called should be bellow a function that does the calling. This creates a nice flow down the source code module from the high level to low level.
 > As in newspaper articles, we expect the most important concepts to come first, and we expect them to be expressed with the least amount of polluting detail. We expect the low-level details to come last. This allows us to skim source files, getting the gist from the frist few functions, without having to immerge ourselves in the details.  
