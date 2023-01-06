@@ -8,7 +8,7 @@
 ![](./doc/code-dep-viz.png)
 
 ```go
-go install github.com/nikolaydubina/verfn@latest
+go install github.com/nikolaydubina/vertfn@latest
 ```
 
 ```bash
