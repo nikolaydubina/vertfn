@@ -12,13 +12,22 @@ func mixFlour() {
 }
 
 func MakePancake() {
+	readRecipe()
+
 	visitStore()
 
 	mixFlour()
 
-	FindOven().WarmUp().Bake()
+	FindOven().
+		WarmUp().
+		WarmUp().
+		Bake()
 
 	Enjoy("pancake")
+}
+
+func readRecipe() {
+	log.Println("reading recepie")
 }
 
 func buyFlour() {
@@ -26,6 +35,7 @@ func buyFlour() {
 }
 
 func visitStore() {
+	readRecipe()
 	buyFlour()
 }
 

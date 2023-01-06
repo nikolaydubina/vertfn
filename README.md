@@ -5,6 +5,23 @@
 > As in newspaper articles, we expect the most important concepts to come first, and we expect them to be expressed with the least amount of polluting detail. We expect the low-level details to come last. This allows us to skim source files, getting the gist from the frist few functions, without having to immerge ourselves in the details.  
 > — Clean Code, Chapter 5, p84, Robert C. Martin, 2009
 
+![](./doc/code-dep-viz.png)
+
+```go
+go install github.com/nikolaydubina/verfn@latest
+```
+
+```bash
+verfn --verbose ./...
+```
+
+## False Positives
+
+ * same function names but different classes
+ * same functino names but from different packages
+ * functions passed as arguments
+ * functions passed as arguments and renamed to match existing functions 
+
 ## Appendix A: Canonical Java Example
 
 Clean Code, Chapter 5, code example `WikiPageResponder.java`

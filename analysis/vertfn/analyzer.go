@@ -32,19 +32,19 @@ func init() {
 
 func fnameFromFuncDecl(n *ast.FuncDecl) string { return n.Name.Name }
 
-func fnameFromCallExpr(n *ast.CallExpr) string {
+func fnameFromCallExpr(n *ast.CallExpr) []string {
 	if ind, ok := n.Fun.(*ast.Ident); ok && ind != nil {
-		return ind.Name
+		return []string{ind.Name}
 	}
 	if sel, ok := n.Fun.(*ast.SelectorExpr); ok && sel != nil {
-		// TODO: utilize type/package information
-		// TODO: differentiate same method name but on different classes
-
-		// TODO: chains of selectors
-		// TODO: chains of methods
-		fmt.Printf("%#v | %#v\n", sel.X, sel.Sel)
+		var fnames []string
+		fnames = append(fnames, sel.Sel.Name)
+		if call, ok := sel.X.(*ast.CallExpr); ok && call != nil {
+			fnames = append(fnames, fnameFromCallExpr(call)...)
+		}
+		return fnames
 	}
-	return ""
+	return nil
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
@@ -72,7 +72,9 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		}
 
 		if call, ok := n.(*ast.CallExpr); ok && call != nil {
-			fnCall[fnameFromCallExpr(call)] = append(fnCall[fnameFromCallExpr(call)], call)
+			for _, fname := range fnameFromCallExpr(call) {
+				fnCall[fname] = append(fnCall[fname], call)
+			}
 		}
 	})
 
