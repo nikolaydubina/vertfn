@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"go/ast"
 
+	"github.com/nikolaydubina/vertfn/analysis/vertfn/color"
+
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -19,11 +21,13 @@ var Analyzer = &analysis.Analyzer{
 }
 
 var (
-	verbose bool
+	verbose  bool
+	colorize bool
 )
 
 func init() {
 	Analyzer.Flags.BoolVar(&verbose, "verbose", false, `print all details`)
+	Analyzer.Flags.BoolVar(&colorize, "color", true, `colorize terminal`)
 }
 
 func fnameFromFuncDecl(n *ast.FuncDecl) string { return n.Name.Name }
@@ -34,9 +38,10 @@ func fnameFromCallExpr(n *ast.CallExpr) string {
 	}
 	if sel, ok := n.Fun.(*ast.SelectorExpr); ok && sel != nil {
 		// TODO: utilize type/package information
+		// TODO: differentiate same method name but on different classes
+
 		// TODO: chains of selectors
 		// TODO: chains of methods
-		// TODO: differentiate same method name but on different classes
 		fmt.Printf("%#v | %#v\n", sel.X, sel.Sel)
 	}
 	return ""
@@ -45,24 +50,49 @@ func fnameFromCallExpr(n *ast.CallExpr) string {
 func run(pass *analysis.Pass) (interface{}, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	fnDefLineNum := map[string]*ast.FuncDecl{}
-	fnCallLineNum := map[string][]*ast.CallExpr{}
+	fnDecl := map[string]*ast.FuncDecl{}
+	fnCall := map[string][]*ast.CallExpr{}
+
+	var printer Printer = SimplePrinter{Pass: pass}
+	if colorize {
+		printer = ColorPrinter{
+			Pass:       pass,
+			ColorError: color.Red,
+			ColorInfo:  color.Gray,
+			ColorOk:    color.Green,
+		}
+	}
+	printer = VerbosePrinter{Verbose: verbose, Printer: printer}
+	printer = &SortedPrinter{Pass: pass, Printer: printer}
+	defer printer.Flush()
 
 	inspect.Preorder([]ast.Node{&ast.FuncDecl{}, &ast.CallExpr{}}, func(n ast.Node) {
 		if fn, ok := n.(*ast.FuncDecl); ok && fn != nil {
-			fnDefLineNum[fnameFromFuncDecl(fn)] = fn
+			fnDecl[fnameFromFuncDecl(fn)] = fn
 		}
 
 		if call, ok := n.(*ast.CallExpr); ok && call != nil {
-			fnCallLineNum[fnameFromCallExpr(call)] = append(fnCallLineNum[fnameFromCallExpr(call)], call)
+			fnCall[fnameFromCallExpr(call)] = append(fnCall[fnameFromCallExpr(call)], call)
 		}
 	})
 
-	for fn, def := range fnDefLineNum {
-		for _, call := range fnCallLineNum[fn] {
-			if verbose || pass.Fset.Position(def.Pos()).Line > pass.Fset.Position(call.Pos()).Line {
-				pass.Reportf(call.Pos(), `func %s is declared on line(%d) > used on line (%d)`, fn, 0, 0)
+	for fn, def := range fnDecl {
+		fnDeclLineNum := pass.Fset.Position(def.Pos()).Line
+
+		usedCount := 0
+		for _, call := range fnCall[fn] {
+			usedCount++
+			fnCallLineNum := pass.Fset.Position(call.Pos()).Line
+
+			if fnDeclLineNum > fnCallLineNum {
+				printer.Ok(call.Pos(), fmt.Sprintf(`func %s delclared(%d) after used(%d)`, fn, fnDeclLineNum, fnCallLineNum))
+			} else {
+				printer.Error(call.Pos(), fmt.Sprintf(`func %s is declared(%d) before used(%d)`, fn, fnDeclLineNum, fnCallLineNum))
 			}
+		}
+
+		if usedCount == 0 {
+			printer.Info(def.Pos(), fmt.Sprintf(`func %s delclared(%d) but not used`, fn, fnDeclLineNum))
 		}
 	}
 
