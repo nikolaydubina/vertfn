@@ -15,12 +15,16 @@ go install github.com/nikolaydubina/verfn@latest
 verfn --verbose ./...
 ```
 
+![](./doc/output-color.png)
+
 ## False Positives
+
+Improving false positive rate is good, such as for following cases:
 
  * same function names but different classes
  * same functino names but from different packages
  * functions passed as arguments
- * functions passed as arguments and renamed to match existing functions 
+ * functions passed as arguments and argument name matches existing function names 
 
 ## Appendix A: Canonical Java Example
 
