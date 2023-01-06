@@ -24,7 +24,7 @@ verfn --verbose ./...
 Improving false positive rate is good, such as for following cases:
 
  * same function names but different classes
- * same functino names but from different packages
+ * same function names but from different packages
  * functions passed as arguments
  * functions passed as arguments and argument name matches existing function names 
 
