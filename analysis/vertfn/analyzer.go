@@ -79,15 +79,19 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	})
 
 	for fn, def := range fnDecl {
+		fnDeclFile := pass.Fset.File(def.Pos()).Name()
 		fnDeclLineNum := pass.Fset.Position(def.Pos()).Line
 
 		usedCount := 0
 		for _, call := range fnCall[fn] {
 			usedCount++
+			fnCallFile := pass.Fset.File(call.Pos()).Name()
 			fnCallLineNum := pass.Fset.Position(call.Pos()).Line
 
-			if fnDeclLineNum > fnCallLineNum {
-				printer.Ok(call.Pos(), fmt.Sprintf(`func %s delclared(%d) after used(%d)`, fn, fnDeclLineNum, fnCallLineNum))
+			if fnCallFile != fnDeclFile {
+				printer.Ok(call.Pos(), fmt.Sprintf(`func %s declared in separate file(%s)`, fn, fnDeclFile))
+			} else if fnDeclLineNum > fnCallLineNum {
+				printer.Ok(call.Pos(), fmt.Sprintf(`func %s declared(%d) after used(%d)`, fn, fnDeclLineNum, fnCallLineNum))
 			} else {
 				printer.Error(call.Pos(), fmt.Sprintf(`func %s is declared(%d) before used(%d)`, fn, fnDeclLineNum, fnCallLineNum))
 			}
