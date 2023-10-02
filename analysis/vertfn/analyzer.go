@@ -60,7 +60,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		defFileScope := pass.Pkg.Scope().Innermost(pass.Fset.File(def).LineStart(1))
 		defScope := pass.Pkg.Scope().Innermost(def)
 		if defScope != defFileScope {
-			printer.Info(ref.Pos(), fmt.Sprintf("skpping definition with inner scope %s != %s", defScope, defFileScope))
+			printer.Info(ref.Pos(), fmt.Sprintf("skpping definition with inner scope from %s", pass.Fset.Position(defScope.Pos())))
 			return
 		}
 
