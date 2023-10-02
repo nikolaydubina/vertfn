@@ -109,6 +109,12 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 	inspect.Nodes(nil, func(n ast.Node, push bool) (proceed bool) {
 		switch node := n.(type) {
+		case *ast.File:
+			if ast.IsGenerated(node) {
+				printer.Info(node.Pos(), "skipping generated file")
+				return false
+			}
+
 		case *ast.FuncDecl:
 			if push && funcDecl == nil {
 				funcDecl = node
