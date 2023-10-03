@@ -25,13 +25,50 @@ var Analyzer = &analysis.Analyzer{
 var (
 	verbose  bool
 	colorize bool
-	reverse  bool
 )
+
+type RefKind string
+
+const (
+	Func     RefKind = "func"
+	Type     RefKind = "type"
+	RecvType RefKind = "recvtype"
+	Value    RefKind = "value"
+)
+
+type Direction string
+
+const (
+	Down   Direction = "down"
+	Up     Direction = "up"
+	Ignore Direction = "ignore"
+)
+
+var RefOrder = map[RefKind]Direction{
+	Func:     Down,
+	Type:     Down,
+	RecvType: Up,
+	Value:    Down,
+}
 
 func init() {
 	Analyzer.Flags.BoolVar(&verbose, "verbose", false, `print all details`)
 	Analyzer.Flags.BoolVar(&colorize, "color", true, `colorize terminal`)
-	Analyzer.Flags.BoolVar(&reverse, "reverse", false, `reverse ordering requirement`)
+	addDirectionFlag := func(kind RefKind, desc string) {
+		Analyzer.Flags.Func(string(kind)+"-dir", fmt.Sprintf("%s (default %s)", desc, RefOrder[kind]), func(s string) error {
+			switch dir := Direction(s); dir {
+			case Down, Up, Ignore:
+				RefOrder[kind] = dir
+				return nil
+			default:
+				return fmt.Errorf("must be %s, %s, or %s", Up, Down, Ignore)
+			}
+		})
+	}
+	addDirectionFlag(Func, "direction of references to functions and methods")
+	addDirectionFlag(Type, "direction of type references, excluding references to the receiver type")
+	addDirectionFlag(RecvType, "direction of references to the receiver type")
+	addDirectionFlag(Value, "direction of references to const and var declarations")
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
@@ -50,7 +87,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	printer = &SortedPrinter{Pass: pass, Printer: printer}
 	defer printer.Flush()
 
-	check := func(ref *ast.Ident, def token.Pos, isRecvType bool) {
+	check := func(ref *ast.Ident, def token.Pos, kind RefKind) {
 		if !def.IsValid() {
 			// So far only seen on calls to Error method of error interface
 			printer.Info(ref.Pos(), "got invalid definition position")
@@ -64,19 +101,18 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			return
 		}
 
-		kind := "definition"
-		if isRecvType {
-			kind = "receiver"
+		if RefOrder[kind] == Ignore {
+			printer.Info(ref.Pos(), fmt.Sprintf("%s reference %s ignored by options", kind, ref.Name))
 		}
 
 		if pass.Fset.File(ref.Pos()).Name() != pass.Fset.File(def).Name() {
-			printer.Ok(ref.Pos(), fmt.Sprintf(`%s %s in separate file (%s)`, kind, ref.Name, pass.Fset.Position(def)))
+			printer.Info(ref.Pos(), fmt.Sprintf(`%s reference %s is to definition in separate file (%s)`, kind, ref.Name, pass.Fset.Position(def)))
 			return
 		}
 
 		refLine, defLine := pass.Fset.Position(ref.Pos()).Line, pass.Fset.Position(def).Line
 		if refLine == defLine {
-			printer.Ok(ref.Pos(), fmt.Sprintf(`%s %s used on same line as declared (%s)`, kind, ref.Name, pass.Fset.Position(def)))
+			printer.Ok(ref.Pos(), fmt.Sprintf(`%s reference %s is on same line as definition (%s)`, kind, ref.Name, pass.Fset.Position(def)))
 			return
 		}
 
@@ -85,14 +121,9 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		if !refBeforeDef {
 			order = "after"
 		}
-		message := fmt.Sprintf(`%s %s used %s declared (%s)`, kind, ref.Name, order, pass.Fset.Position(def))
+		message := fmt.Sprintf(`%s reference %s is %s definition (%s)`, kind, ref.Name, order, pass.Fset.Position(def))
 
-		// Written somewhat verbosely to help make it understandable
-		orderOk := refBeforeDef
-		if isRecvType || reverse {
-			orderOk = !orderOk
-		}
-		if orderOk {
+		if orderOk := refBeforeDef == (RefOrder[kind] == Down); orderOk {
 			printer.Ok(ref.Pos(), message)
 		} else {
 			printer.Error(ref.Pos(), message)
@@ -140,10 +171,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			obj := sel.Obj()
 			switch sel.Kind() {
 			case types.MethodVal:
-				check(node.Sel, obj.Pos(), false)
+				check(node.Sel, obj.Pos(), Func)
 			case types.FieldVal:
 			case types.MethodExpr:
-				check(node.Sel, obj.Pos(), false)
+				check(node.Sel, obj.Pos(), Func)
 			default:
 				// No other enum values are defined, logging just in case.
 				printer.Info(node.Pos(), fmt.Sprintf("unknown selection kind %v", sel.Kind()))
@@ -162,7 +193,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			case *ast.ValueSpec:
 				for _, ident := range spec.Names {
 					if ident.Name == node.Name && ident != node {
-						check(node, ident.Pos(), false)
+						check(node, ident.Pos(), Value)
 					}
 				}
 			case *ast.Field:
@@ -173,7 +204,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 					}
 				}
 			case *ast.FuncDecl:
-				check(node, spec.Pos(), false)
+				check(node, spec.Pos(), Func)
 			case *ast.TypeSpec:
 				if funcDecl != nil && beforeFuncType {
 					// We're in a file-level func decl before getting to the
@@ -185,10 +216,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 				}
 				if funcDecl != nil && recvType == spec {
 					// Reference to the receiver type within a method type or body
-					check(node, spec.Pos(), true)
+					check(node, spec.Pos(), RecvType)
 					break
 				}
-				check(node, spec.Pos(), false)
+				check(node, spec.Pos(), Type)
 			default:
 				printer.Info(node.Pos(), fmt.Sprintf("unexpected ident decl type %T", node.Obj.Decl))
 			}

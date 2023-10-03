@@ -2,11 +2,11 @@ package example
 
 import "log"
 
+func FindOven() *Oven { return &Oven{} }
+
 type Oven struct {
 	temperature float32
 }
-
-func FindOven() *Oven { return &Oven{} }
 
 func (s *Oven) WarmUp() *Oven {
 	s.temperature += 42
