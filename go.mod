@@ -2,9 +2,6 @@ module github.com/nikolaydubina/vertfn
 
 go 1.18
 
-require golang.org/x/tools v0.5.0
+require golang.org/x/tools v0.19.0
 
-require (
-	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/sys v0.4.0 // indirect
-)
+require golang.org/x/mod v0.16.0 // indirect
