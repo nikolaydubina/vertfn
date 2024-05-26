@@ -102,7 +102,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		}
 
 		if usedCount == 0 {
-			printer.Info(def.Pos(), fmt.Sprintf(`func %s delclared(%d) but not used`, fn, fnDeclLineNum))
+			printer.Info(def.Pos(), fmt.Sprintf(`func %s declared(%d) but not used`, fn, fnDeclLineNum))
 		}
 	}
 
