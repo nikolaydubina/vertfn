@@ -18,7 +18,7 @@ go install github.com/nikolaydubina/vertfn@latest
 ```
 
 ```bash
-verfn --verbose ./...
+vertfn --verbose ./...
 ```
 
 ![](./doc/output-color.png)
